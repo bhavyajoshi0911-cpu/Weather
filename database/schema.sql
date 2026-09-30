@@ -1,0 +1,33 @@
+CREATE DATABASE IF NOT EXISTS weather_dashboard;
+USE weather_dashboard;
+
+CREATE TABLE IF NOT EXISTS users (
+	id INT AUTO_INCREMENT PRIMARY KEY,
+	name VARCHAR(120) NOT NULL DEFAULT 'Demo User',
+	email VARCHAR(255) UNIQUE,
+	created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+INSERT INTO users (id, name, email)
+VALUES (1, 'Demo User', 'demo@weather.local')
+ON DUPLICATE KEY UPDATE name = VALUES(name);
+
+CREATE TABLE IF NOT EXISTS favorites (
+	id INT AUTO_INCREMENT PRIMARY KEY,
+	user_id INT NOT NULL,
+	city VARCHAR(120) NOT NULL,
+	country VARCHAR(8),
+	latitude DECIMAL(9, 6),
+	longitude DECIMAL(9, 6),
+	created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+	CONSTRAINT favorites_user_fk FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS search_history (
+	id INT AUTO_INCREMENT PRIMARY KEY,
+	user_id INT NOT NULL,
+	city VARCHAR(120) NOT NULL,
+	country VARCHAR(8),
+	searched_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+	CONSTRAINT search_user_fk FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);

@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta name="description" content="Real-time weather intelligence dashboard">
+	<title>Weather Intelligence</title>
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+	<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+	<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+	<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+</head>
+<body>
+	<div class="app-shell">
+		<aside class="sidebar">
+			<a class="brand" href="/" aria-label="Weather Intelligence home"><span class="brand-mark">W</span><span>Weather<br><b>Intelligence</b></span></a>
+			<nav class="side-nav" aria-label="Main navigation">
+				<a class="nav-link active" href="#overview"><span class="nav-icon">&#9673;</span> Overview</a>
+				<a class="nav-link" href="#forecast"><span class="nav-icon">&#9728;</span> Forecast</a>
+				<a class="nav-link" href="#map-section"><span class="nav-icon">&#9678;</span> Weather map</a>
+				<a class="nav-link" href="#assistant"><span class="nav-icon">&#10022;</span> AI assistant</a>
+			</nav>
+			<div class="sidebar-bottom">
+				<div class="sidebar-note"><span class="pulse-dot"></span><div><small>Live data</small><strong>OpenWeather connected</strong></div></div>
+				<button class="settings-link" type="button" id="sidebar-theme"><span>&#9788;</span> Appearance</button>
+			</div>
+		</aside>
+
+		<main class="main-content">
+			<header class="topbar">
+				<div class="mobile-brand"><span class="brand-mark">W</span> Weather Intelligence</div>
+				<div class="topbar-actions">
+					<form class="search-form" id="search-form" role="search">
+						<span class="search-icon">&#9906;</span>
+						<input id="city-search" type="search" placeholder="Search a city..." autocomplete="off" aria-label="Search city">
+						<button type="submit">Search</button>
+					</form>
+					<button class="icon-button location-button" id="location-button" type="button" title="Use my location" aria-label="Use my location">&#8982;</button>
+					<button class="icon-button theme-button" id="theme-toggle" type="button" title="Toggle theme" aria-label="Toggle light and dark theme">&#9788;</button>
+				</div>
+			</header>
+			<nav class="mobile-nav" aria-label="Dashboard sections">
+				<a class="active" href="#overview">Overview</a>
+				<a href="#forecast">Forecast</a>
+				<a href="#map-section">Map</a>
+				<a href="#assistant">Assistant</a>
+			</nav>
+
+			<div id="app-alert" class="app-alert" role="alert" hidden></div>
+			<div id="loading-state" class="loading-state" hidden><span class="spinner"></span> Updating weather intelligence...</div>
+
+			<section class="welcome-row" id="overview">
+				<div><p class="eyebrow">DASHBOARD / <span id="updated-label">LIVE CONDITIONS</span></p><h1>Weather, <span>in focus.</span></h1><p class="welcome-subtitle">A clearer read on the day ahead.</p></div>
+				<div class="date-chip" id="header-date">--</div>
+			</section>
+			<div class="quick-cities" aria-label="Popular cities">
+				<span>EXPLORE</span>
+				<button type="button" class="quick-city" data-city="Tokyo">Tokyo</button>
+				<button type="button" class="quick-city" data-city="London">London</button>
+				<button type="button" class="quick-city" data-city="New York">New York</button>
+				<button type="button" class="quick-city" data-city="Singapore">Singapore</button>
+			</div>
+
+			<section class="hero-grid">
+				<article class="hero-card panel">
+					<div class="hero-top"><div><p class="eyebrow">CURRENT CONDITIONS</p><h2 id="location-name">Search a city to begin</h2><p class="muted" id="location-meta">Real-time weather intelligence at a glance</p></div><button class="favorite-button" id="favorite-button" type="button" title="Save current city" aria-label="Save current city">&#9734;</button></div>
+					<div class="hero-weather"><div><div class="temperature"><span id="current-temperature">--</span><sup>°</sup></div><p class="condition" id="current-condition">Waiting for a location</p><p class="muted" id="feels-like">Feels like --</p></div><div class="weather-visual"><img id="current-icon" src="https://openweathermap.org/img/wn/01d@2x.png" alt="Weather condition"><div class="sun-label" id="local-time">Local time --</div></div></div>
+					<div class="hero-footer"><span><i class="mini-icon">&#8593;</i> High <b id="high-temperature">--</b></span><span><i class="mini-icon">&#8595;</i> Low <b id="low-temperature">--</b></span><span><i class="mini-icon">&#9673;</i> Visibility <b id="visibility-value">--</b></span></div>
+				</article>
+				<article class="insight-card panel"><div class="card-heading"><div><p class="eyebrow">TODAY'S INSIGHT</p><h3 id="insight-title">Weather at a glance</h3></div><span class="spark-icon">&#10022;</span></div><p id="insight-copy">Search for a city to see a clear, practical read on the conditions around you.</p><div class="insight-line"><span class="pulse-dot"></span><span id="insight-status">Waiting for weather data</span></div></article>
+			</section>
+
+			<section class="metric-grid" aria-label="Weather metrics">
+				<article class="metric-card panel"><span class="metric-icon blue">&#9775;</span><div><p>Humidity</p><strong id="humidity-value">--</strong><small id="humidity-note">Relative moisture</small></div></article>
+				<article class="metric-card panel"><span class="metric-icon coral">&#10148;</span><div><p>Wind</p><strong id="wind-value">--</strong><small id="wind-note">Direction --</small></div></article>
+				<article class="metric-card panel"><span class="metric-icon gold">&#9633;</span><div><p>Pressure</p><strong id="pressure-value">--</strong><small>Sea level pressure</small></div></article>
+				<article class="metric-card panel"><span class="metric-icon mint">&#9678;</span><div><p>Cloud cover</p><strong id="cloud-value">--</strong><small>Sky coverage</small></div></article>
+			</section>
+
+			<section class="section-block" id="alerts-section">
+				<div class="section-heading">
+					<div><p class="eyebrow">ALERTS</p><h2>🔔 Smart Weather Alerts</h2></div>
+					<span class="alerts-badge" id="alerts-badge">No alerts</span>
+				</div>
+				<article class="panel alert-panel" id="alert-card" hidden>
+					<div class="alert-header">
+						<div class="alert-bell">🔔</div>
+						<div>
+							<p class="eyebrow">SMART WEATHER ALERTS</p>
+							<h3 id="alert-summary">No active alerts in this area.</h3>
+						</div>
+					</div>
+					<div class="alert-list" id="alerts-list"></div>
+				</article>
+			</section>
+
+			<section class="section-block" id="forecast"><div class="section-heading"><div><p class="eyebrow">NEXT 24 HOURS</p><h2>Hourly forecast</h2></div><span class="section-meta">Rain probability included</span></div><div class="hourly-list" id="hourly-list"><div class="empty-state">Hourly forecast will appear here.</div></div></section>
+
+			<section class="content-grid">
+				<article class="panel chart-panel"><div class="section-heading"><div><p class="eyebrow">TEMPERATURE</p><h2>Temperature trend</h2></div><span class="chart-legend"><i></i> °C</span></div><div class="chart-wrap"><canvas id="temperature-chart"></canvas></div></article>
+				<article class="panel chart-panel"><div class="section-heading"><div><p class="eyebrow">PRECIPITATION</p><h2>Rain probability</h2></div><span class="chart-legend rain"><i></i> %</span></div><div class="chart-wrap"><canvas id="rain-chart"></canvas></div></article>
+			</section>
+
+			<section class="section-block"><div class="section-heading"><div><p class="eyebrow">EXTENDED OUTLOOK</p><h2>5-day forecast</h2></div></div><div class="daily-grid" id="daily-list"><div class="empty-state">Extended forecast will appear here.</div></div></section>
+
+			<section class="content-grid lower-grid">
+				<article class="panel sun-card"><div class="section-heading"><div><p class="eyebrow">DAYLIGHT</p><h2>Sunrise & sunset</h2></div><span class="sun-symbol">&#9788;</span></div><div class="sun-times"><div><small>Sunrise</small><strong id="sunrise-value">--</strong></div><div class="sun-track"><span></span></div><div class="text-end"><small>Sunset</small><strong id="sunset-value">--</strong></div></div><p class="muted" id="day-length">Day length unavailable</p></article>
+				<article class="panel air-card" id="air-card"><div class="section-heading"><div><p class="eyebrow">ATMOSPHERE</p><h2>Air quality</h2></div><span class="aqi-badge" id="aqi-badge">--</span></div><div class="air-grid"><div><small>AQI</small><strong id="aqi-value">--</strong></div><div><small>PM2.5</small><strong id="pm25-value">--</strong></div><div><small>PM10</small><strong id="pm10-value">--</strong></div></div><p class="muted" id="aqi-note">Air quality data will load with a location.</p></article>
+			</section>
+
+			<section class="section-block" id="map-section"><div class="section-heading"><div><p class="eyebrow">GEOSPATIAL VIEW</p><h2>Weather map</h2></div><span class="coordinates" id="coordinates">Lat -- / Lon --</span></div><div class="map-frame" id="weather-map"></div></section>
+
+			<section class="content-grid bottom-grid">
+				<article class="panel list-panel"><div class="section-heading"><div><p class="eyebrow">YOUR PLACES</p><h2>Favorite cities</h2></div><span class="count-badge" id="favorite-count">0</span></div><div class="city-list" id="favorites-list"><div class="empty-state">Save a city with the star above.</div></div></article>
+				<article class="panel list-panel"><div class="section-heading"><div><p class="eyebrow">RECENTLY VIEWED</p><h2>Search history</h2></div></div><div class="city-list" id="history-list"><div class="empty-state">Your recent searches will appear here.</div></div></article>
+			</section>
+
+			<section class="assistant-panel panel" id="assistant"><div class="assistant-copy"><span class="assistant-badge">AI</span><p class="eyebrow">WEATHER INTELLIGENCE</p><h2>Ask your weather assistant.</h2><p>Get a practical explanation using the current conditions for <strong id="assistant-location">your selected city</strong>.</p><div class="suggestion-list"><button type="button" class="suggestion">Should I carry an umbrella?</button><button type="button" class="suggestion">Is it good for outdoor exercise?</button><button type="button" class="suggestion">Why does it feel hotter?</button></div></div><div class="assistant-chat"><div class="answer-box" id="ai-answer">Ask a question and the assistant will explain the weather in plain language.</div><form id="ai-form" class="ai-form"><input id="ai-question" type="text" placeholder="Ask about today's weather..." aria-label="Ask the weather assistant"><button type="submit" aria-label="Send question">&#8599;</button></form></div></section>
+
+			<footer class="footer"><span>Weather Intelligence Dashboard</span><span>Data provided by OpenWeather</span></footer>
+		</main>
+	</div>
+	<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+	<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+	<script src="{{ url_for('static', filename='js/charts.js') }}"></script>
+	<script src="{{ url_for('static', filename='js/map.js') }}"></script>
+	<script src="{{ url_for('static', filename='js/weather.js') }}"></script>
+	<script src="{{ url_for('static', filename='js/ai.js') }}"></script>
+	<script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>
